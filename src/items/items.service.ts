@@ -17,9 +17,10 @@ export class ItemsService {
    * @returns El nuevo ítem creado.
    */
   async create(createItemDto: any, companyId: string): Promise<Item> {
+    // CORRECCIÓN: Creamos y guardamos el ítem en un solo paso más explícito.
     const newItem = this.itemsRepository.create({
       ...createItemDto,
-      companyId: companyId, // Asocia el ítem con la empresa del usuario logueado
+      companyId: companyId,
     });
     return this.itemsRepository.save(newItem);
   }
@@ -43,13 +44,9 @@ export class ItemsService {
    * @returns El ítem encontrado.
    */
   async findOne(id: string, companyId: string): Promise<Item> {
-    const item = await this.itemsRepository.findOneBy({ id });
+    const item = await this.itemsRepository.findOneBy({ id, companyId }); // Búsqueda más segura
     if (!item) {
-      throw new NotFoundException(`Ítem con ID "${id}" no encontrado.`);
-    }
-    // ¡Medida de seguridad clave!
-    if (item.companyId !== companyId) {
-      throw new UnauthorizedException('No tiene permiso para acceder a este recurso.');
+      throw new NotFoundException(`Ítem con ID "${id}" no encontrado o no pertenece a su empresa.`);
     }
     return item;
   }
@@ -62,9 +59,9 @@ export class ItemsService {
    * @returns El ítem actualizado.
    */
   async update(id: string, updateItemDto: any, companyId: string): Promise<Item> {
-    await this.findOne(id, companyId); // Reutilizamos para verificar propiedad y existencia
-    await this.itemsRepository.update(id, updateItemDto);
-    return this.findOne(id, companyId);
+    const item = await this.findOne(id, companyId); // Reutilizamos para verificar propiedad y existencia
+    const updatedItem = Object.assign(item, updateItemDto);
+    return this.itemsRepository.save(updatedItem);
   }
 
   /**
