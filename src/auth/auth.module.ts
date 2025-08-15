@@ -11,6 +11,8 @@ import { AuthGuard } from './auth.guard';
     UsersModule,
     ConfigModule,
     JwtModule.registerAsync({
+      // CORRECCIÓN CLAVE: Hacemos este módulo global
+      global: true, 
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'un_secreto_muy_seguro_por_defecto',
@@ -19,9 +21,8 @@ import { AuthGuard } from './auth.guard';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, AuthGuard], // El guardia es un proveedor de este módulo
+  providers: [AuthService, AuthGuard],
   controllers: [AuthController],
-  // CORRECCIÓN: Exportamos el guardia y sus herramientas para que otros módulos puedan usarlos.
-  exports: [AuthService, AuthGuard, JwtModule], 
+  exports: [AuthService], // Ya no necesitamos exportar todo lo demás
 })
 export class AuthModule {}
