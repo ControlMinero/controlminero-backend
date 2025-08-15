@@ -4,22 +4,24 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthGuard } from './auth.guard';
 
 @Module({
   imports: [
-    UsersModule, // Importamos el módulo de usuarios para poder buscarlos
-    ConfigModule, // Para leer variables de entorno
+    UsersModule,
+    ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'un_secreto_muy_seguro_por_defecto', // Clave secreta para firmar los tokens
-        signOptions: { expiresIn: '8h' }, // Los tokens expirarán en 8 horas
-        global: true,
+        secret: configService.get<string>('JWT_SECRET') || 'un_secreto_muy_seguro_por_defecto',
+        signOptions: { expiresIn: '8h' },
       }),
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, AuthGuard], // El guardia es un proveedor de este módulo
   controllers: [AuthController],
+  // CORRECCIÓN: Exportamos el guardia y sus herramientas para que otros módulos puedan usarlos.
+  exports: [AuthService, AuthGuard, JwtModule], 
 })
 export class AuthModule {}
